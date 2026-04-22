@@ -28,4 +28,4 @@ AI-powered job search automation built on AWS serverless.
 
 ## Live App
 
-[jobs.naindegital.com](https://jobs.naindegital.com) *(coming soon)*
+[jobs.naindigital.com](https://jobs.naindegital.com) *(coming soon)*
