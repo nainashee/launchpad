@@ -21,11 +21,27 @@ AI-powered job search automation built on AWS serverless.
 
 - [x] Terraform base infrastructure (S3, CloudFront, ACM, DNS)
 - [x] DynamoDB tables (Profile, Applications, Jobs)
-- [x] 5 core Lambda functions (skeletons with IAM roles)
-- [ ] API Gateway HTTP API + routes
+- [x] 5 core Lambda functions (skeletons + IAM roles)
+- [x] API Gateway HTTP API (9 routes, fully wired)
 - [ ] React frontend
 - [ ] GitHub Actions CI/CD pipeline
 - [ ] Bedrock AI integration
+
+## API
+
+**Base URL:** `https://zh1gkhvulc.execute-api.us-east-1.amazonaws.com`
+
+| Method | Route | Function |
+|---|---|---|
+| POST | `/tailor-resume` | Tailor resume against a job description |
+| POST | `/decode-job` | Extract signals from a job posting |
+| POST | `/outreach` | Draft LinkedIn/email outreach |
+| POST | `/interview` | Mock interview (multi-turn) |
+| POST | `/applications` | Create a job application |
+| GET | `/applications` | List all applications |
+| GET | `/applications/{id}` | Get a single application |
+| PUT | `/applications/{id}` | Update application status |
+| DELETE | `/applications/{id}` | Delete an application |
 
 ## Infrastructure
 
@@ -39,4 +55,4 @@ AI-powered job search automation built on AWS serverless.
 
 ## Live App
 
-[jobs.naindigital.com](https://jobs.naindigital.com) *(coming soon)*
+[jobs.naindigital.com](https://jobs.naindigital.com) *(frontend coming soon)*

@@ -101,3 +101,34 @@ TTL is a built-in expiry mechanism. You store a Unix timestamp in the `ttl` attr
 
 **How Terraform zips Lambda code:**
 The `data "archive_file"` data source creates a `.zip` file from a local Python file at plan/apply time. Terraform tracks the zip's SHA256 hash in `source_code_hash` — so if the Python code changes, Terraform knows to re-upload the Lambda on the next apply.
+
+---
+
+### API Gateway (same session)
+
+#### What I built
+
+An HTTP API Gateway with 9 routes wired to the 5 Lambda functions:
+- `POST /tailor-resume`, `POST /decode-job`, `POST /outreach`, `POST /interview`
+- `POST /applications`, `GET /applications`, `GET /applications/{id}`, `PUT /applications/{id}`, `DELETE /applications/{id}`
+
+Live URL: `https://zh1gkhvulc.execute-api.us-east-1.amazonaws.com`
+
+Tested end-to-end with curl and got a real response from the Lambda through API Gateway.
+
+#### What I understand now
+
+**The four things needed to wire API Gateway to a Lambda:**
+1. `aws_apigatewayv2_integration` — tells API Gateway which Lambda ARN to call
+2. `aws_apigatewayv2_route` — maps a `METHOD /path` to an integration
+3. `aws_lambda_permission` — grants API Gateway the IAM permission to invoke the Lambda
+4. `aws_apigatewayv2_stage` — the deployment unit; `$default` with `auto_deploy = true` means every `terraform apply` automatically goes live
+
+**What `payload_format_version = "2.0"` means:**
+There are two formats for how API Gateway packages the HTTP request before sending it to Lambda. Version 2.0 is simpler and cheaper — it uses a cleaner JSON structure. The Lambda handlers use `event.get("requestContext", {}).get("http", {}).get("method")` which is the v2.0 path.
+
+**Why CORS is configured on the API, not the Lambda:**
+CORS (Cross-Origin Resource Sharing) is enforced by the browser. When the React frontend (on `jobs.naindigital.com`) calls the API (on `execute-api.amazonaws.com`), the browser first sends a preflight `OPTIONS` request. API Gateway handles these automatically when you set `cors_configuration` — the Lambda never even sees them.
+
+**What `source_arn = "${execution_arn}/*/*"` means:**
+The `/*/*/*` pattern is `{api}/{stage}/{route}`. Using `/*/*` (any stage, any route) means the same permission covers all routes pointing to that Lambda, so you don't need one permission per route.

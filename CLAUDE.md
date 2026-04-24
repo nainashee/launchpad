@@ -90,7 +90,7 @@ launchpad-assets-<account-id>/
 ## Commands
 
 ```bash
-# Terraform — always prefix with AWS_PROFILE=launchpad
+# Terraform — always prefix with AWS_PROFILE=launchpad (backend requires it)
 cd infra/
 AWS_PROFILE=launchpad terraform init
 AWS_PROFILE=launchpad terraform plan
@@ -110,6 +110,17 @@ npm run lint       # ESLint
 
 # CI/CD
 # GitHub Actions handles deploy on push to main
+```
+
+## Live Endpoints
+
+**API Gateway base URL:** `https://zh1gkhvulc.execute-api.us-east-1.amazonaws.com`
+
+Test any route with curl:
+```bash
+curl -s -X POST https://zh1gkhvulc.execute-api.us-east-1.amazonaws.com/decode-job \
+  -H "Content-Type: application/json" \
+  -d '{"jobDescription": "..."}'
 ```
 
 ## Key Design Decisions
