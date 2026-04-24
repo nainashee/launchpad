@@ -23,3 +23,8 @@ output "s3_bucket_name" {
   description = "S3 bucket name for deploying files"
   value       = aws_s3_bucket.frontend.id
 }
+
+output "api_url" {
+  description = "API Gateway base URL — append route paths to call the backend"
+  value       = aws_apigatewayv2_stage.default.invoke_url
+}
