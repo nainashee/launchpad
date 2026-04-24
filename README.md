@@ -17,14 +17,25 @@ AI-powered job search automation built on AWS serverless.
 
 ## Status
 
-**Phase 1 — Scaffolding** (in progress)
+**Phase 1 — MVP** (in progress)
 
-- [ ] Terraform base infrastructure
-- [ ] 5 core Lambda functions
-- [ ] DynamoDB tables (Profile, Applications)
-- [ ] API Gateway routes
-- [ ] React frontend (S3 + CloudFront)
+- [x] Terraform base infrastructure (S3, CloudFront, ACM, DNS)
+- [x] DynamoDB tables (Profile, Applications, Jobs)
+- [x] 5 core Lambda functions (skeletons with IAM roles)
+- [ ] API Gateway HTTP API + routes
+- [ ] React frontend
 - [ ] GitHub Actions CI/CD pipeline
+- [ ] Bedrock AI integration
+
+## Infrastructure
+
+| Resource | Name |
+|---|---|
+| Frontend bucket | `launchpad-frontend-jobs` |
+| Assets bucket | `launchpad-assets-989126024881` |
+| CloudFront | `d1j38znc7w4uld.cloudfront.net` |
+| DynamoDB | `launchpad-profile`, `launchpad-applications`, `launchpad-jobs` |
+| Lambdas | `launchpad-tailor-resume`, `launchpad-decode-job`, `launchpad-generate-outreach`, `launchpad-mock-interview`, `launchpad-tracker` |
 
 ## Live App
 

@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 LaunchPad is an AI-powered job search automation tool built on AWS serverless. It tailors resumes, decodes job descriptions, generates outreach messages, supports mock interviews, and tracks applications — all via Claude on Bedrock.
 
-- **Domain:** jobs.naindegital.com
+- **Domain:** jobs.naindigital.com
 - **Owner:** Hussain Ashfaque (nain.ashee@gmail.com)
 - **Repo:** github.com/nainashee/launchpad
 - **Target cost:** <$5/month at personal usage scale
@@ -55,15 +55,22 @@ LaunchPad is an AI-powered job search automation tool built on AWS serverless. I
 - PK: `source`, SK: `jobId`
 - Fields: `title`, `company`, `description`, `scrapedAt`, `ttl` (30-day TTL)
 
-### S3 Bucket Layout
+### S3 Buckets
 
+| Bucket | Purpose |
+|---|---|
+| `launchpad-frontend-jobs` | Static React app, served via CloudFront + OAC |
+| `launchpad-assets-<account-id>` | Resumes, prompt templates, job cache (private) |
+
+**Assets bucket layout:**
 ```
-launchpad-assets/
+launchpad-assets-<account-id>/
   resumes/          # master + tailored PDFs
   prompts/          # Bedrock prompt templates
-  job-cache/        # raw scraped job data
-  frontend/         # built React app (served via CloudFront)
+  job-cache/        # raw scraped job data (Phase 2)
 ```
+
+> Note: The assets bucket name includes the AWS account ID to guarantee global S3 uniqueness.
 
 ## Development Phases
 
@@ -82,21 +89,18 @@ launchpad-assets/
 
 ## Commands
 
-These will be added as the project scaffolds out. Expected structure:
-
 ```bash
-# Terraform
+# Terraform — always prefix with AWS_PROFILE=launchpad
 cd infra/
-terraform init
-terraform plan
-terraform apply
+AWS_PROFILE=launchpad terraform init
+AWS_PROFILE=launchpad terraform plan
+AWS_PROFILE=launchpad terraform apply
 
 # Lambda (Python)
-cd lambdas/<function-name>/
-pip install -r requirements.txt
+cd functions/<function-name>/
 python -m pytest tests/
 
-# Frontend (React)
+# Frontend (React) — not scaffolded yet
 cd frontend/
 npm install
 npm run dev        # local dev server
