@@ -4,7 +4,8 @@
 # ---------------------------------------------------------------------------
 data "archive_file" "auth_layer" {
   type        = "zip"
-  source_dir  = "${path.module}/../layers/auth/python"
+  source_dir  = "${path.module}/../layers/auth"
+  excludes    = ["auth_layer.zip", "build.sh", "requirements.txt", ".gitignore"]
   output_path = "${path.module}/../layers/auth/auth_layer.zip"
 }
 
@@ -47,6 +48,12 @@ data "archive_file" "tracker" {
   type        = "zip"
   source_file = "${path.module}/../functions/tracker/handler.py"
   output_path = "${path.module}/../functions/tracker/handler.zip"
+}
+
+data "archive_file" "profile_api" {
+  type        = "zip"
+  source_file = "${path.module}/../functions/profile-api/handler.py"
+  output_path = "${path.module}/../functions/profile-api/handler.zip"
 }
 
 # ---------------------------------------------------------------------------
@@ -389,6 +396,71 @@ resource "aws_lambda_function" "tracker" {
   environment {
     variables = {
       APPLICATIONS_TABLE  = aws_dynamodb_table.applications.name
+      FIREBASE_PROJECT_ID = var.firebase_project_id
+    }
+  }
+}
+
+# ---------------------------------------------------------------------------
+# profile-api — GET/PUT /profile, POST /profile/upload-url, POST /profile/parse-resume
+# Needs DynamoDB read/write on profile + usage tables.
+# S3 presigned URL permission added in Step 0b.
+# ---------------------------------------------------------------------------
+resource "aws_iam_role" "profile_api" {
+  name               = "${var.project_name}-profile-api"
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
+}
+
+resource "aws_iam_role_policy_attachment" "profile_api_basic" {
+  role       = aws_iam_role.profile_api.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+resource "aws_iam_role_policy" "profile_api_inline" {
+  name = "profile-api-inline"
+  role = aws_iam_role.profile_api.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "DynamoDBProfileCRUD"
+        Effect = "Allow"
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem",
+        ]
+        Resource = aws_dynamodb_table.profile.arn
+      },
+      {
+        Sid    = "DynamoDBUsageReadWrite"
+        Effect = "Allow"
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:UpdateItem",
+        ]
+        Resource = aws_dynamodb_table.usage.arn
+      }
+    ]
+  })
+}
+
+resource "aws_lambda_function" "profile_api" {
+  function_name    = "${var.project_name}-profile-api"
+  role             = aws_iam_role.profile_api.arn
+  filename         = data.archive_file.profile_api.output_path
+  source_code_hash = data.archive_file.profile_api.output_base64sha256
+  runtime          = "python3.12"
+  handler          = "handler.handler"
+  timeout          = 15
+  memory_size      = 128
+  layers           = [aws_lambda_layer_version.auth.arn]
+
+  environment {
+    variables = {
+      PROFILE_TABLE       = aws_dynamodb_table.profile.name
+      USAGE_TABLE         = aws_dynamodb_table.usage.name
       FIREBASE_PROJECT_ID = var.firebase_project_id
     }
   }

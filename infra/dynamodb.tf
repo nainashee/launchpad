@@ -53,6 +53,36 @@ resource "aws_dynamodb_table" "applications" {
 }
 
 # ---------------------------------------------------------------------------
+# Usage table — Phase 2 per-user daily quota tracking (security item S-9)
+# PK: userId  SK: date (ISO date string, e.g. "2026-04-27")
+# ---------------------------------------------------------------------------
+resource "aws_dynamodb_table" "usage" {
+  name         = "${var.project_name}-usage"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "userId"
+  range_key    = "date"
+
+  attribute {
+    name = "userId"
+    type = "S"
+  }
+
+  attribute {
+    name = "date"
+    type = "S"
+  }
+
+  ttl {
+    attribute_name = "ttl"
+    enabled        = true
+  }
+
+  tags = {
+    Project = var.project_name
+  }
+}
+
+# ---------------------------------------------------------------------------
 # Jobs table — Phase 2 cache for scraped job postings (30-day TTL)
 # ---------------------------------------------------------------------------
 resource "aws_dynamodb_table" "jobs" {

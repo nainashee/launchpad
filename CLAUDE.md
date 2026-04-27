@@ -123,7 +123,7 @@ Security hardening (pre-Phase 2, complete ✅):
 - [ ] **S-11** — Reserved Lambda concurrency — deferred until AWS Support grants concurrency limit increase (current account limit: 10)
 
 Phase 2 checklist:
-- [ ] **0a** — `profile-api` Lambda + 4 new API routes (GET/PUT /profile, POST /profile/upload-url, POST /profile/parse-resume) + `launchpad-usage` quota table
+- [x] **0a** — `profile-api` Lambda + 4 new API routes (GET/PUT /profile, POST /profile/upload-url stub, POST /profile/parse-resume stub) + `launchpad-usage` quota table
 - [ ] **0b** — Presigned S3 upload URL flow + S3 CORS config for direct browser upload + upload restrictions (PDF only, 5MB, 5-min expiry)
 - [ ] **0c** — `parse-resume` Lambda (Bedrock PDF extraction + preference suggestions) + extend Profile table schema in Terraform
 - [ ] **0d** — `/profile` frontend screen (upload → spinner → suggestions form → confirm)

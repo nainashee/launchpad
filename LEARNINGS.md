@@ -226,3 +226,38 @@ S3 returns 403 (Forbidden) — not 404 — when a file doesn't exist in a privat
 
 **How `onAuthStateChanged` is different from a one-time check:**
 `onAuthStateChanged` is a persistent listener — it fires immediately with the current auth state, then fires again whenever the user signs in or out. React's `useEffect` with the cleanup return handles unsubscribing when the component unmounts. The `loading` state (starts `true`, set to `false` after the first callback) prevents the app from flashing a redirect before Firebase has confirmed the user's session from the browser's local storage.
+
+---
+
+## Session 5 — April 27, 2026
+
+### What I built
+
+Started Phase 2 with Step 0a — the profile API layer:
+
+1. **`launchpad-profile-api` Lambda** — handles `GET /profile` and `PUT /profile`. GET returns the user's profile item from DynamoDB (or `{}` if the user is new). PUT accepts a whitelist of user-settable fields (`email`, `name`, `targetTitles`, `skills`, `githubUsername`, `linkedInUrl`, `onboardingComplete`) and updates only those. System-managed fields like `parseStatus` and `masterResumeS3Key` are excluded from the whitelist — only the parse-resume Lambda can set those.
+
+2. **`launchpad-usage` DynamoDB table** — PK: `userId`, SK: `date` (ISO date string). Will be used in Phase 2 for per-user daily quota enforcement. Has a 30-day TTL so old records auto-delete.
+
+3. **4 new API Gateway routes** — `GET /profile`, `PUT /profile`, `POST /profile/upload-url` (501 stub for Step 0b), `POST /profile/parse-resume` (501 stub for Step 0c).
+
+4. **Auth layer bug fix** — discovered all 6 Lambdas were broken with `No module named 'auth'`. Root cause: Terraform's `archive_file` with `source_dir = layers/auth/python/` zips the CONTENTS of that directory, placing `auth.py` at the zip root. Lambda layers extract to `/opt/` and Python only looks in `/opt/python/` — so `import auth` fails. Fixed by changing `source_dir` to `layers/auth/` (one level up, with `excludes` for build artifacts) so the zip contains `python/auth.py`. Deployed as `launchpad-auth:2`.
+
+### What tripped me up
+
+**Lambda layer zip structure.**
+The auth layer had been deployed with the wrong zip structure since the security hardening session — `auth.py` was at the zip root instead of under `python/`. This placed it at `/opt/auth.py` when extracted, but Python's sys.path for layers only includes `/opt/python/`. All 6 Lambdas were returning 500. Fixing the Terraform `source_dir` and applying created a new layer version (`:2`) and updated all functions.
+
+**Git Bash path mangling (again).**
+`aws logs filter-log-events --log-group-name /aws/lambda/...` fails on Windows with Git Bash — the shell converts `/aws/lambda/...` to `C:/Program Files/Git/aws/lambda/...`. The fix is always prefix with `MSYS_NO_PATHCONV=1`.
+
+### What I understand now
+
+**How Lambda layer zip structure works:**
+Lambda extracts a layer's zip to `/opt/`. For Python, the runtime adds `/opt/python` and `/opt/python/lib/python3.x/site-packages` to `sys.path`. Files need to be inside a `python/` directory in the zip — so `python/auth.py` → `/opt/python/auth.py` → `import auth` works. Files at the zip root go to `/opt/auth.py` → not on the path → `ImportModuleError`.
+
+**Terraform `archive_file` with `source_dir` strips the directory name:**
+`source_dir = "layers/auth/python"` creates a zip whose contents are the FILES inside that directory, not the directory itself. So `auth.py` ends up at the zip root, not under `python/`. To get `python/auth.py` in the zip, you need `source_dir = "layers/auth"` (the parent), which puts the entire `python/` folder — including its contents — into the zip.
+
+**Why stubs (501) are better than waiting to wire routes:**
+Creating the API routes early (even as 501 stubs) means the frontend team can code against the full API contract before the backend logic is built. It also means the Terraform integration and Lambda permission are already in place — Step 0b only needs to fill in the handler logic, no infrastructure changes required for the route itself.

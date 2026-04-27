@@ -39,7 +39,7 @@ AI-powered job search automation built on AWS serverless.
 
 **Phase 2 — Live Job Search** 🚧 in progress
 
-- [ ] `profile-api` Lambda + per-user quota table (`launchpad-usage`)
+- [x] `profile-api` Lambda + per-user quota table (`launchpad-usage`) — `GET /profile`, `PUT /profile` live
 - [ ] Resume upload: presigned S3 URL + PDF restrictions (type, size, expiry)
 - [ ] `parse-resume` Lambda — Bedrock PDF extraction: skills, roles, experience, preference suggestions
 - [ ] `/profile` frontend screen — upload → AI parses → confirm preferences
@@ -87,9 +87,10 @@ AI-powered job search automation built on AWS serverless.
 | Frontend bucket | `launchpad-frontend-jobs` |
 | Assets bucket | `launchpad-assets-989126024881` |
 | CloudFront | `d1j38znc7w4uld.cloudfront.net` |
-| DynamoDB | `launchpad-profile`, `launchpad-applications`, `launchpad-jobs`, `launchpad-job-rankings` *(Phase 2)* |
+| DynamoDB | `launchpad-profile`, `launchpad-applications`, `launchpad-jobs`, `launchpad-usage`, `launchpad-job-rankings` *(Phase 2 Step 2)* |
 | Phase 1 Lambdas | `launchpad-tailor-resume`, `launchpad-decode-job`, `launchpad-generate-outreach`, `launchpad-mock-interview`, `launchpad-tracker` |
-| Phase 2 Lambdas | `launchpad-profile-api`, `launchpad-parse-resume`, `launchpad-job-scraper`, `launchpad-job-ranker`, `launchpad-jobs-api`, `launchpad-email-digest` |
+| Phase 2 Lambdas (live) | `launchpad-profile-api` |
+| Phase 2 Lambdas (planned) | `launchpad-parse-resume`, `launchpad-job-scraper`, `launchpad-job-ranker`, `launchpad-jobs-api`, `launchpad-email-digest` |
 
 ## Auth & Security
 

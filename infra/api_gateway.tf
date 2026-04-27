@@ -151,6 +151,37 @@ resource "aws_apigatewayv2_route" "tracker_delete" {
   target    = "integrations/${aws_apigatewayv2_integration.tracker.id}"
 }
 
+resource "aws_apigatewayv2_integration" "profile_api" {
+  api_id                 = aws_apigatewayv2_api.main.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = aws_lambda_function.profile_api.invoke_arn
+  payload_format_version = "2.0"
+}
+
+resource "aws_apigatewayv2_route" "profile_get" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /profile"
+  target    = "integrations/${aws_apigatewayv2_integration.profile_api.id}"
+}
+
+resource "aws_apigatewayv2_route" "profile_put" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "PUT /profile"
+  target    = "integrations/${aws_apigatewayv2_integration.profile_api.id}"
+}
+
+resource "aws_apigatewayv2_route" "profile_upload_url" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /profile/upload-url"
+  target    = "integrations/${aws_apigatewayv2_integration.profile_api.id}"
+}
+
+resource "aws_apigatewayv2_route" "profile_parse_resume" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /profile/parse-resume"
+  target    = "integrations/${aws_apigatewayv2_integration.profile_api.id}"
+}
+
 # ---------------------------------------------------------------------------
 # Lambda permissions — allows API Gateway to invoke each function
 # ---------------------------------------------------------------------------
@@ -190,6 +221,14 @@ resource "aws_lambda_permission" "tracker" {
   statement_id  = "AllowAPIGateway"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.tracker.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.main.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "profile_api" {
+  statement_id  = "AllowAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.profile_api.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.main.execution_arn}/*/*"
 }
