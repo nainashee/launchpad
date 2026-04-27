@@ -4,14 +4,18 @@ import os
 
 import boto3
 
+from auth import AuthError, log_request, verify_firebase_jwt
+
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-MODEL_ID     = os.environ.get("MODEL_ID", "us.anthropic.claude-haiku-4-5-20251001-v1:0")
+MODEL_ID      = os.environ.get("MODEL_ID", "us.anthropic.claude-haiku-4-5-20251001-v1:0")
 PROFILE_TABLE = os.environ.get("PROFILE_TABLE", "")
 
 bedrock  = boto3.client("bedrock-runtime", region_name="us-east-1")
 dynamodb = boto3.resource("dynamodb")
+
+MAX_INPUT_CHARS = 5_000
 
 SYSTEM_PROMPT = """You are an expert at writing professional outreach messages for job seekers.
 Write concise, genuine, non-generic messages that get responses.
@@ -24,39 +28,47 @@ Be direct, specific, and human."""
 
 
 def handler(event, context):
-    logger.info("generate-outreach invoked")
+    uid = "anonymous"
+    try:
+        uid = verify_firebase_jwt(event)
+    except AuthError as e:
+        log_request(uid, "outreach", "auth_error", reason=e.message)
+        return _response(401, {"error": e.message})
 
     body = json.loads(event.get("body") or "{}")
-    user_id = body.get("userId", "default")
     job_description = body.get("jobDescription", "").strip()
-    outreach_type = body.get("type", "linkedin")  # "linkedin" or "email"
+    outreach_type   = body.get("type", "linkedin")
 
     if not job_description:
+        log_request(uid, "outreach", "validation_error", reason="missing jobDescription")
         return _response(400, {"error": "jobDescription is required"})
 
-    # Get profile context — either from DynamoDB or body fallback
-    profile = _get_profile(user_id, body)
+    if len(job_description) > MAX_INPUT_CHARS:
+        log_request(uid, "outreach", "validation_error", reason="input too long")
+        return _response(400, {"error": f"jobDescription exceeds {MAX_INPUT_CHARS} character limit"})
+
+    profile = _get_profile(uid, body)
 
     try:
         message = _call_bedrock(profile, job_description, outreach_type)
+        log_request(uid, "outreach", "success", type=outreach_type)
         return _response(200, {"message": message, "type": outreach_type})
     except Exception as e:
-        logger.error("Bedrock error: %s", e)
+        logger.error("Bedrock error for user %s: %s", uid, e)
+        log_request(uid, "outreach", "error", reason=str(e))
         return _response(500, {"error": "Failed to generate message. Please try again."})
 
 
-def _get_profile(user_id, body):
-    """Try DynamoDB first, fall back to fields passed directly in the request body."""
+def _get_profile(uid, body):
     profile = {}
     if PROFILE_TABLE:
         try:
-            table = dynamodb.Table(PROFILE_TABLE)
-            result = table.get_item(Key={"userId": user_id})
+            table  = dynamodb.Table(PROFILE_TABLE)
+            result = table.get_item(Key={"userId": uid})
             profile = result.get("Item", {})
         except Exception as e:
             logger.warning("Could not fetch profile: %s", e)
 
-    # Allow body fields to fill gaps (useful before profile is set up)
     return {
         "name":         body.get("name",         profile.get("name", "the applicant")),
         "targetTitles": body.get("targetTitles",  profile.get("targetTitles", [])),
@@ -88,7 +100,7 @@ def _call_bedrock(profile, job_description, outreach_type):
     }
 
     response = bedrock.invoke_model(modelId=MODEL_ID, body=json.dumps(payload))
-    result = json.loads(response["body"].read())
+    result   = json.loads(response["body"].read())
     return result["content"][0]["text"].strip()
 
 
@@ -97,7 +109,7 @@ def _response(status_code, body):
         "statusCode": status_code,
         "headers": {
             "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Origin": "https://jobs.naindigital.com",
         },
         "body": json.dumps(body),
     }

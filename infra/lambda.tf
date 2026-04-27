@@ -1,4 +1,22 @@
 # ---------------------------------------------------------------------------
+# Auth layer — shared JWT verification + structured logging utility
+# Packages are pre-built for Linux/x86_64 via layers/auth/build.sh
+# ---------------------------------------------------------------------------
+data "archive_file" "auth_layer" {
+  type        = "zip"
+  source_dir  = "${path.module}/../layers/auth/python"
+  output_path = "${path.module}/../layers/auth/auth_layer.zip"
+}
+
+resource "aws_lambda_layer_version" "auth" {
+  layer_name          = "${var.project_name}-auth"
+  filename            = data.archive_file.auth_layer.output_path
+  source_code_hash    = data.archive_file.auth_layer.output_base64sha256
+  compatible_runtimes = ["python3.12"]
+  description         = "Firebase JWT verification + structured logging (PyJWT, cryptography, requests)"
+}
+
+# ---------------------------------------------------------------------------
 # Zip each function's handler.py for deployment
 # ---------------------------------------------------------------------------
 data "archive_file" "tailor_resume" {
@@ -108,12 +126,18 @@ resource "aws_lambda_function" "tailor_resume" {
   handler          = "handler.handler"
   timeout          = 60
   memory_size      = 512
+  layers = [aws_lambda_layer_version.auth.arn]
+
+  # reserved_concurrent_executions omitted — account limit is 10 (new account default).
+  # API Gateway route throttling provides rate protection instead.
+  # Revisit after requesting a concurrency limit increase from AWS Support.
 
   environment {
     variables = {
-      ASSETS_BUCKET = aws_s3_bucket.assets.id
-      PROFILE_TABLE = aws_dynamodb_table.profile.name
-      MODEL_ID      = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+      ASSETS_BUCKET       = aws_s3_bucket.assets.id
+      PROFILE_TABLE       = aws_dynamodb_table.profile.name
+      MODEL_ID            = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+      FIREBASE_PROJECT_ID = var.firebase_project_id
     }
   }
 }
@@ -170,11 +194,13 @@ resource "aws_lambda_function" "decode_job" {
   handler          = "handler.handler"
   timeout          = 30
   memory_size      = 256
+  layers = [aws_lambda_layer_version.auth.arn]
 
   environment {
     variables = {
-      ASSETS_BUCKET = aws_s3_bucket.assets.id
-      MODEL_ID      = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+      ASSETS_BUCKET       = aws_s3_bucket.assets.id
+      MODEL_ID            = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+      FIREBASE_PROJECT_ID = var.firebase_project_id
     }
   }
 }
@@ -237,11 +263,13 @@ resource "aws_lambda_function" "generate_outreach" {
   handler          = "handler.handler"
   timeout          = 30
   memory_size      = 256
+  layers = [aws_lambda_layer_version.auth.arn]
 
   environment {
     variables = {
-      PROFILE_TABLE = aws_dynamodb_table.profile.name
-      MODEL_ID      = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+      PROFILE_TABLE       = aws_dynamodb_table.profile.name
+      MODEL_ID            = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+      FIREBASE_PROJECT_ID = var.firebase_project_id
     }
   }
 }
@@ -298,10 +326,12 @@ resource "aws_lambda_function" "mock_interview" {
   handler          = "handler.handler"
   timeout          = 30
   memory_size      = 256
+  layers = [aws_lambda_layer_version.auth.arn]
 
   environment {
     variables = {
-      MODEL_ID = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+      MODEL_ID            = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+      FIREBASE_PROJECT_ID = var.firebase_project_id
     }
   }
 }
@@ -354,10 +384,12 @@ resource "aws_lambda_function" "tracker" {
   handler          = "handler.handler"
   timeout          = 10
   memory_size      = 128
+  layers           = [aws_lambda_layer_version.auth.arn]
 
   environment {
     variables = {
-      APPLICATIONS_TABLE = aws_dynamodb_table.applications.name
+      APPLICATIONS_TABLE  = aws_dynamodb_table.applications.name
+      FIREBASE_PROJECT_ID = var.firebase_project_id
     }
   }
 }

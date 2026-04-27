@@ -1,0 +1,5 @@
+# Ignore all installed packages — rebuilt by layers/auth/build.sh before deploy
+# Only auth.py is source-controlled
+*
+!.gitignore
+!auth.py

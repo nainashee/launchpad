@@ -21,3 +21,9 @@ variable "aws_region" {
   type        = string
   default     = "us-east-1"
 }
+
+variable "firebase_project_id" {
+  description = "Firebase project ID — used by Lambdas to verify JWT audience/issuer"
+  type        = string
+  default     = "launchpad-93064"
+}

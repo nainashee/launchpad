@@ -5,16 +5,20 @@ from datetime import datetime, timezone
 
 import boto3
 
+from auth import AuthError, log_request, verify_firebase_jwt
+
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-MODEL_ID     = os.environ.get("MODEL_ID", "us.anthropic.claude-haiku-4-5-20251001-v1:0")
+MODEL_ID      = os.environ.get("MODEL_ID", "us.anthropic.claude-haiku-4-5-20251001-v1:0")
 ASSETS_BUCKET = os.environ.get("ASSETS_BUCKET", "")
 PROFILE_TABLE = os.environ.get("PROFILE_TABLE", "")
 
 bedrock  = boto3.client("bedrock-runtime", region_name="us-east-1")
 s3       = boto3.client("s3")
 dynamodb = boto3.resource("dynamodb")
+
+MAX_INPUT_CHARS = 8_000
 
 SYSTEM_PROMPT = """You are an expert resume writer and career coach.
 Your task is to tailor a resume to a specific job description.
@@ -29,43 +33,53 @@ Guidelines:
 
 
 def handler(event, context):
-    logger.info("tailor-resume invoked")
+    uid = "anonymous"
+    try:
+        uid = verify_firebase_jwt(event)
+    except AuthError as e:
+        log_request(uid, "tailor-resume", "auth_error", reason=e.message)
+        return _response(401, {"error": e.message})
 
     body = json.loads(event.get("body") or "{}")
-    user_id = body.get("userId", "default")
     job_description = body.get("jobDescription", "").strip()
-    resume_text = body.get("resumeText", "").strip()
+    resume_text     = body.get("resumeText", "").strip()
 
     if not job_description:
+        log_request(uid, "tailor-resume", "validation_error", reason="missing jobDescription")
         return _response(400, {"error": "jobDescription is required"})
 
-    # Get resume text: body field takes priority, then S3 via profile
-    if not resume_text:
-        resume_text = _fetch_resume_from_s3(user_id)
+    if len(job_description) > MAX_INPUT_CHARS:
+        log_request(uid, "tailor-resume", "validation_error", reason="input too long")
+        return _response(400, {"error": f"jobDescription exceeds {MAX_INPUT_CHARS} character limit"})
 
     if not resume_text:
+        resume_text = _fetch_resume_from_s3(uid)
+
+    if not resume_text:
+        log_request(uid, "tailor-resume", "validation_error", reason="no resume found")
         return _response(400, {
             "error": "No resume found. Paste your resume text in the resumeText field, "
-                     "or upload your master resume to S3 via your profile."
+                     "or upload your master resume via your profile."
         })
 
     try:
         tailored = _call_bedrock(resume_text, job_description)
-        s3_key = _save_to_s3(user_id, tailored)
+        s3_key = _save_to_s3(uid, tailored)
+        log_request(uid, "tailor-resume", "success", input_chars=len(job_description))
         return _response(200, {"tailoredResume": tailored, "s3Key": s3_key})
     except Exception as e:
-        logger.error("Error: %s", e)
+        logger.error("Bedrock error for user %s: %s", uid, e)
+        log_request(uid, "tailor-resume", "error", reason=str(e))
         return _response(500, {"error": "Failed to tailor resume. Please try again."})
 
 
-def _fetch_resume_from_s3(user_id):
-    """Try to get master resume key from Profile table, then fetch from S3."""
+def _fetch_resume_from_s3(uid):
     if not PROFILE_TABLE or not ASSETS_BUCKET:
         return None
     try:
-        table = dynamodb.Table(PROFILE_TABLE)
-        result = table.get_item(Key={"userId": user_id})
-        item = result.get("Item", {})
+        table  = dynamodb.Table(PROFILE_TABLE)
+        result = table.get_item(Key={"userId": uid})
+        item   = result.get("Item", {})
         s3_key = item.get("masterResumeS3Key")
         if not s3_key:
             return None
@@ -93,16 +107,15 @@ def _call_bedrock(resume_text, job_description):
         ],
     }
     response = bedrock.invoke_model(modelId=MODEL_ID, body=json.dumps(payload))
-    result = json.loads(response["body"].read())
+    result   = json.loads(response["body"].read())
     return result["content"][0]["text"].strip()
 
 
-def _save_to_s3(user_id, tailored_text):
-    """Save tailored resume to S3 and return the key."""
+def _save_to_s3(uid, tailored_text):
     if not ASSETS_BUCKET:
         return None
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
-    key = f"resumes/{user_id}/tailored-{timestamp}.txt"
+    key = f"resumes/{uid}/tailored-{timestamp}.txt"
     try:
         s3.put_object(
             Bucket=ASSETS_BUCKET,
@@ -112,7 +125,7 @@ def _save_to_s3(user_id, tailored_text):
         )
         return key
     except Exception as e:
-        logger.warning("Could not save to S3: %s", e)
+        logger.warning("Could not save tailored resume to S3: %s", e)
         return None
 
 
@@ -121,7 +134,7 @@ def _response(status_code, body):
         "statusCode": status_code,
         "headers": {
             "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Origin": "https://jobs.naindigital.com",
         },
         "body": json.dumps(body),
     }

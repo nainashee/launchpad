@@ -18,11 +18,42 @@ resource "aws_apigatewayv2_api" "main" {
 
 # ---------------------------------------------------------------------------
 # Default stage — auto-deploys on every Terraform apply
+# Route-level throttling caps request rates before Lambda is invoked.
+# Bedrock routes are tighter (expensive); CRUD routes are looser (cheap).
 # ---------------------------------------------------------------------------
 resource "aws_apigatewayv2_stage" "default" {
   api_id      = aws_apigatewayv2_api.main.id
   name        = "$default"
   auto_deploy = true
+
+  default_route_settings {
+    throttling_rate_limit  = 20
+    throttling_burst_limit = 50
+  }
+
+  route_settings {
+    route_key              = "POST /decode-job"
+    throttling_rate_limit  = 0.5
+    throttling_burst_limit = 2
+  }
+
+  route_settings {
+    route_key              = "POST /tailor-resume"
+    throttling_rate_limit  = 0.3
+    throttling_burst_limit = 1
+  }
+
+  route_settings {
+    route_key              = "POST /outreach"
+    throttling_rate_limit  = 0.5
+    throttling_burst_limit = 2
+  }
+
+  route_settings {
+    route_key              = "POST /interview"
+    throttling_rate_limit  = 1
+    throttling_burst_limit = 3
+  }
 }
 
 # ---------------------------------------------------------------------------
