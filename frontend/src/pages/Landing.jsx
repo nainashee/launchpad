@@ -39,7 +39,8 @@ export default function Landing() {
       await signInWithGoogle();
       navigate('/dashboard');
     } catch (err) {
-      setError('Sign-in failed. Please try again.');
+      console.error('Sign-in error:', err.code, err.message);
+      setError(`Sign-in failed: ${err.code ?? err.message}`);
       setLoading(false);
     }
   };
