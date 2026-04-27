@@ -1,0 +1,109 @@
+.outreach-type-row {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.type-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--border);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: border-color var(--ease), background var(--ease), color var(--ease);
+  user-select: none;
+}
+
+.type-pill input[type="radio"] {
+  display: none;
+}
+
+.type-pill:hover {
+  border-color: var(--green-500);
+  color: var(--green-700);
+}
+
+.type-pill.active {
+  border-color: var(--green-600);
+  background: var(--green-50, #f0f7f2);
+  color: var(--green-700);
+  font-weight: 600;
+}
+
+/* ─── Extra fields (name, skills) ─── */
+.outreach-extras {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 520px) {
+  .outreach-extras {
+    grid-template-columns: 1fr;
+  }
+}
+
+.outreach-extra-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.outreach-extra-field input {
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-body);
+  font-size: 0.9rem;
+  padding: 0.6rem 0.85rem;
+  font-family: 'Inter', sans-serif;
+  transition: border-color var(--ease), box-shadow var(--ease);
+}
+
+.outreach-extra-field input:focus {
+  outline: none;
+  border-color: var(--green-500);
+  box-shadow: 0 0 0 3px rgba(90, 143, 106, 0.15);
+}
+
+.outreach-extra-field input::placeholder {
+  color: var(--text-muted);
+}
+
+.optional {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+/* ─── Copy button ─── */
+.copy-btn {
+  padding: 0.3rem 0.85rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--ease), border-color var(--ease), color var(--ease);
+}
+
+.copy-btn:hover {
+  background: var(--green-50, #f0f7f2);
+  border-color: var(--green-500);
+  color: var(--green-700);
+}
+
+/* ─── Message output ─── */
+.outreach-message {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.92rem;
+  line-height: 1.8;
+}

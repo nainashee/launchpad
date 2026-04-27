@@ -14,8 +14,8 @@ export const decodeJob = (jobDescription) =>
 export const tailorResume = (jobDescription, resumeText = '') =>
   api.post('/tailor-resume', { jobDescription, resumeText, userId: uid() });
 
-export const generateOutreach = (jobDescription, type = 'linkedin') =>
-  api.post('/outreach', { jobDescription, type, userId: uid() });
+export const generateOutreach = (jobDescription, type = 'linkedin', name = '', skills = '') =>
+  api.post('/outreach', { jobDescription, type, userId: uid(), name, skills });
 
 export const getApplications = () =>
   api.get('/applications', { params: { userId: uid() } });

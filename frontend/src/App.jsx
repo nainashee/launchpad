@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import TailorResume from './pages/TailorResume';
 import JobDecoder from './pages/JobDecoder';
 import Applications from './pages/Applications';
+import GenerateOutreach from './pages/GenerateOutreach';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -27,6 +28,7 @@ function AppRoutes() {
         <Route path="/dashboard"    element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/tailor"       element={<ProtectedRoute><TailorResume /></ProtectedRoute>} />
         <Route path="/decode"       element={<ProtectedRoute><JobDecoder /></ProtectedRoute>} />
+        <Route path="/outreach"      element={<ProtectedRoute><GenerateOutreach /></ProtectedRoute>} />
         <Route path="/applications" element={<ProtectedRoute><Applications /></ProtectedRoute>} />
         <Route path="*"             element={<Navigate to="/" replace />} />
       </Routes>

@@ -99,6 +99,10 @@ export default function Dashboard() {
                 <span className="action-icon">⬡</span>
                 <span>Decode a Job</span>
               </Link>
+              <Link to="/outreach" className="action-card">
+                <span className="action-icon">✉</span>
+                <span>Generate Outreach</span>
+              </Link>
               <Link to="/applications" className="action-card">
                 <span className="action-icon">◈</span>
                 <span>Track Application</span>

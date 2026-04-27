@@ -28,6 +28,7 @@ export default function Nav() {
         <NavLink to="/dashboard">Dashboard</NavLink>
         <NavLink to="/tailor">Tailor Resume</NavLink>
         <NavLink to="/decode">Job Decoder</NavLink>
+        <NavLink to="/outreach">Outreach</NavLink>
         <NavLink to="/applications">Applications</NavLink>
       </div>
 
@@ -79,6 +80,7 @@ export default function Nav() {
           <NavLink to="/dashboard"    onClick={close}>Dashboard</NavLink>
           <NavLink to="/tailor"       onClick={close}>Tailor Resume</NavLink>
           <NavLink to="/decode"       onClick={close}>Job Decoder</NavLink>
+          <NavLink to="/outreach"     onClick={close}>Outreach</NavLink>
           <NavLink to="/applications" onClick={close}>Applications</NavLink>
           <button className="nav-drawer-signout" onClick={handleSignOut}>Sign out</button>
         </div>
