@@ -1,0 +1,30 @@
+.tailor-form {
+  max-width: 100% !important;
+}
+
+.tailor-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+@media (max-width: 700px) {
+  .tailor-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tailor-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.s3-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--green-700);
+  background: var(--green-100);
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+}

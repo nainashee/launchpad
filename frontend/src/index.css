@@ -212,6 +212,15 @@ a:hover { color: var(--green-800); }
 .btn-sm { padding: 0.3rem 0.8rem; font-size: 0.8rem; }
 
 /* ─── Code ───────────────────────────────────────────────────── */
+.app-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
 code {
   background: var(--brown-50);
   border: 1px solid var(--border);

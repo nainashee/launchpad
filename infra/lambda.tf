@@ -68,7 +68,10 @@ resource "aws_iam_role_policy" "tailor_resume_inline" {
         Sid    = "BedrockInvoke"
         Effect = "Allow"
         Action = ["bedrock:InvokeModel"]
-        Resource = "arn:aws:bedrock:${var.aws_region}::foundation-model/*"
+        Resource = [
+          "arn:aws:bedrock:*::foundation-model/*",
+          "arn:aws:bedrock:*:*:inference-profile/*",
+        ]
       },
       {
         Sid    = "S3Assets"
@@ -100,6 +103,7 @@ resource "aws_lambda_function" "tailor_resume" {
     variables = {
       ASSETS_BUCKET = aws_s3_bucket.assets.id
       PROFILE_TABLE = aws_dynamodb_table.profile.name
+      MODEL_ID      = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
     }
   }
 }
@@ -128,7 +132,10 @@ resource "aws_iam_role_policy" "decode_job_inline" {
         Sid    = "BedrockInvoke"
         Effect = "Allow"
         Action = ["bedrock:InvokeModel"]
-        Resource = "arn:aws:bedrock:${var.aws_region}::foundation-model/*"
+        Resource = [
+          "arn:aws:bedrock:*::foundation-model/*",
+          "arn:aws:bedrock:*:*:inference-profile/*",
+        ]
       }
     ]
   })
@@ -147,6 +154,7 @@ resource "aws_lambda_function" "decode_job" {
   environment {
     variables = {
       ASSETS_BUCKET = aws_s3_bucket.assets.id
+      MODEL_ID      = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
     }
   }
 }
@@ -175,7 +183,10 @@ resource "aws_iam_role_policy" "generate_outreach_inline" {
         Sid    = "BedrockInvoke"
         Effect = "Allow"
         Action = ["bedrock:InvokeModel"]
-        Resource = "arn:aws:bedrock:${var.aws_region}::foundation-model/*"
+        Resource = [
+          "arn:aws:bedrock:*::foundation-model/*",
+          "arn:aws:bedrock:*:*:inference-profile/*",
+        ]
       },
       {
         Sid    = "DynamoDBProfileRead"
@@ -200,6 +211,7 @@ resource "aws_lambda_function" "generate_outreach" {
   environment {
     variables = {
       PROFILE_TABLE = aws_dynamodb_table.profile.name
+      MODEL_ID      = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
     }
   }
 }
@@ -228,7 +240,10 @@ resource "aws_iam_role_policy" "mock_interview_inline" {
         Sid    = "BedrockInvoke"
         Effect = "Allow"
         Action = ["bedrock:InvokeModel"]
-        Resource = "arn:aws:bedrock:${var.aws_region}::foundation-model/*"
+        Resource = [
+          "arn:aws:bedrock:*::foundation-model/*",
+          "arn:aws:bedrock:*:*:inference-profile/*",
+        ]
       }
     ]
   })
@@ -243,6 +258,12 @@ resource "aws_lambda_function" "mock_interview" {
   handler          = "handler.handler"
   timeout          = 30
   memory_size      = 256
+
+  environment {
+    variables = {
+      MODEL_ID = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+    }
+  }
 }
 
 # ---------------------------------------------------------------------------
