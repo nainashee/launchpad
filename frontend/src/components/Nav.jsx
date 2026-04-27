@@ -3,6 +3,19 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './Nav.css';
 
+function TornadoIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 32 32" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
+      <path d="M6 5h20l-4 7H10L6 5z"          fill="#3d6b4a" opacity="0.9" />
+      <path d="M10 12h12l-3 6H13l-3-6z"        fill="#3d6b4a" opacity="0.75" />
+      <path d="M13 18h6l-2 5h-2l-2-5z"          fill="#3d6b4a" opacity="0.6" />
+      <path d="M14.5 23h3l-1.5 4-1.5-4z"        fill="#3d6b4a" opacity="0.45" />
+      <path d="M7 8q4-1 8 1"   stroke="#5a8f6a" strokeWidth="1.2" strokeLinecap="round" opacity="0.6" />
+      <path d="M11 14.5q3-0.8 6 0.5" stroke="#5a8f6a" strokeWidth="1" strokeLinecap="round" opacity="0.5" />
+    </svg>
+  );
+}
+
 export default function Nav() {
   const [open, setOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -20,6 +33,7 @@ export default function Nav() {
   return (
     <nav className="nav">
       <NavLink to="/dashboard" className="nav-logo" onClick={close}>
+        <TornadoIcon />
         Launch<span>Pad</span>
       </NavLink>
 

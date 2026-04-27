@@ -50,7 +50,10 @@ export default function Landing() {
       {/* Hero */}
       <header className="landing-hero">
         <div className="landing-hero-inner">
-          <div className="landing-logo">Launch<span>Pad</span></div>
+          <div className="landing-logo">
+            <TornadoIcon />
+            <span className="landing-logo-text">Launch<span className="landing-logo-accent">Pad</span></span>
+          </div>
           <h1 className="landing-headline">
             Your job search,<br />powered by AI.
           </h1>
@@ -92,6 +95,59 @@ export default function Landing() {
         Built by Hussain · Powered by Claude on AWS Bedrock
       </footer>
     </div>
+  );
+}
+
+function TornadoIcon({ size = 32, className = '' }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 32 32"
+      fill="none"
+      className={className}
+      aria-hidden="true"
+    >
+      {/* Funnel body */}
+      <path
+        d="M6 5h20l-4 7H10L6 5z"
+        fill="#3d6b4a"
+        opacity="0.9"
+      />
+      {/* Middle band */}
+      <path
+        d="M10 12h12l-3 6H13l-3-6z"
+        fill="#3d6b4a"
+        opacity="0.75"
+      />
+      {/* Lower band */}
+      <path
+        d="M13 18h6l-2 5h-2l-2-5z"
+        fill="#3d6b4a"
+        opacity="0.6"
+      />
+      {/* Tip */}
+      <path
+        d="M14.5 23h3l-1.5 4-1.5-4z"
+        fill="#3d6b4a"
+        opacity="0.45"
+      />
+      {/* Swirl lines */}
+      <path
+        d="M7 8q4-1 8 1"
+        stroke="#5a8f6a"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+        opacity="0.6"
+      />
+      <path
+        d="M11 14.5q3-0.8 6 0.5"
+        stroke="#5a8f6a"
+        strokeWidth="1"
+        strokeLinecap="round"
+        opacity="0.5"
+      />
+    </svg>
   );
 }
 
