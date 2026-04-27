@@ -182,3 +182,47 @@ React Router handles routing in the browser — `/tailor`, `/decode` etc. are no
 
 **CSS custom properties for design tokens:**
 Instead of hardcoding colours throughout the CSS, all design values live in `:root { --green-700: #3d6b4a; ... }`. Every component references `var(--green-700)`. To retheme the whole app you change one block. It also makes dark mode trivial to add later — just redefine the variables inside a `@media (prefers-color-scheme: dark)` block.
+
+---
+
+## Session 4 — April 27, 2026 (continued)
+
+### What I built
+
+Today I completed Phase 1 by adding auth and wiring up live AI:
+
+1. **Firebase Google Auth** — added a public landing page with a Google sign-in button. Firebase handles the OAuth popup flow. `AuthContext` wraps the app and exposes `user`, `loading`, `signInWithGoogle`, and `signOut`. A `ProtectedRoute` component redirects unauthenticated users back to `/`.
+
+2. **Firebase UID as userId** — every API call now uses `auth.currentUser?.uid` as the `userId` parameter, replacing the hardcoded `"default"` string. This means DynamoDB data is correctly scoped per user.
+
+3. **CloudFront SPA routing fix** — added `custom_error_response` blocks for both 403 and 404 that return `index.html` with a 200 status. Without this, loading `jobs.naindigital.com/tailor` directly (or refreshing) returned a 404 because CloudFront asked S3 for a file called `/tailor` and got "NoSuchKey." Now CloudFront serves `index.html` and React Router handles the path.
+
+4. **Real Bedrock AI in all 5 Lambdas** — each handler calls `bedrock-runtime` `invoke_model` with the Anthropic messages API format. Model used: `us.anthropic.claude-haiku-4-5-20251001-v1:0` (cross-region inference profile — routes across us-east-1, us-west-2, us-west-1 for availability).
+
+5. **aws-marketplace IAM fix** — Lambda roles needed `aws-marketplace:ViewSubscriptions`, `Subscribe`, and `Unsubscribe` to access Anthropic models via the cross-region inference profile. Added a `MarketplaceSubscribe` statement to all 4 Bedrock Lambda inline policies in `lambda.tf` and ran `terraform apply`.
+
+### What tripped me up
+
+**`auth/auth-domain-config-required`** — the Firebase `authDomain` config was being injected as a Vite env var from a GitHub secret. The secret was set but the variable name didn't match exactly, so `authDomain` came through as `undefined`. Fix: hardcoded the Firebase config directly in `firebase.js`. Firebase config values (apiKey, projectId, etc.) are public by design — they identify the app, they don't grant access. Firebase Security Rules control what authenticated users can do.
+
+**`auth/operation-not-allowed`** — even with correct config, the sign-in failed because the Google provider wasn't enabled in the Firebase console. You have to explicitly turn it on under Authentication → Sign-in method → Google.
+
+**CloudFront 404 on direct URL** — covered in the build section. The fix was `custom_error_response` blocks in `cloudfront.tf`, not anything in the app code. 403 also needs a handler because S3 returns 403 (not 404) for "file not found in a private bucket."
+
+**Bedrock `AccessDeniedException` — aws-marketplace actions** — the Lambda IAM role had `bedrock:InvokeModel` but the cross-region inference profile for Anthropic models also requires the Lambda to be authorized to perform AWS Marketplace subscription actions. Bedrock uses these to verify the model subscription is active. Adding `aws-marketplace:ViewSubscriptions`, `Subscribe`, `Unsubscribe` to the Lambda inline policy resolved it.
+
+**Git Bash path mangling on Windows** — `aws logs tail /aws/lambda/...` fails because Git Bash converts the log group path to a Windows file path. The fix is to prefix the command with `MSYS_NO_PATHCONV=1`.
+
+### What I understand now
+
+**Why Firebase config is safe to commit:**
+The Firebase `apiKey` and project details identify your Firebase project — they're not credentials. They're public by design and visible in any browser that loads your app. Access control is enforced at the Firebase/Firestore Security Rules layer, not by keeping the config secret. Keeping it in a secret was actually making things harder with no security benefit.
+
+**How cross-region inference profiles work in Bedrock:**
+Instead of calling a specific regional endpoint for a model, you call a `us.` prefixed inference profile (e.g. `us.anthropic.claude-haiku-4-5-20251001-v1:0`). Bedrock routes the request across `us-east-1`, `us-west-2`, and `us-west-1` for availability and capacity. The trade-off: the model ID format is different from a direct foundation model ID, and the IAM policy needs `inference-profile/*` in the Resource list alongside `foundation-model/*`.
+
+**Why 403 and 404 both need CloudFront fallbacks for SPAs:**
+S3 returns 403 (Forbidden) — not 404 — when a file doesn't exist in a private bucket accessed via OAC. So a missing route like `/tailor` produces a 403, not a 404. CloudFront must handle both codes and return `index.html` with a 200, otherwise direct navigation to any non-root URL breaks.
+
+**How `onAuthStateChanged` is different from a one-time check:**
+`onAuthStateChanged` is a persistent listener — it fires immediately with the current auth state, then fires again whenever the user signs in or out. React's `useEffect` with the cleanup return handles unsubscribing when the component unmounts. The `loading` state (starts `true`, set to `false` after the first callback) prevents the app from flashing a redirect before Firebase has confirmed the user's session from the browser's local storage.

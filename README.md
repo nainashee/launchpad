@@ -17,15 +17,16 @@ AI-powered job search automation built on AWS serverless.
 
 ## Status
 
-**Phase 1 — MVP** (in progress)
+**Phase 1 — MVP** ✅ complete
 
 - [x] Terraform base infrastructure (S3, CloudFront, ACM, DNS)
 - [x] DynamoDB tables (Profile, Applications, Jobs)
-- [x] 5 core Lambda functions (skeletons + IAM roles)
+- [x] 5 core Lambda functions + IAM roles
 - [x] API Gateway HTTP API (9 routes, fully wired)
 - [x] React frontend (4 screens, earthy light theme, mobile responsive)
 - [x] GitHub Actions CI/CD — auto-deploy on push to main
-- [ ] Bedrock AI integration
+- [x] Firebase Google auth — landing page + protected routes
+- [x] Bedrock AI integration — all 5 Lambdas live
 
 ## API
 
@@ -53,20 +54,25 @@ AI-powered job search automation built on AWS serverless.
 | DynamoDB | `launchpad-profile`, `launchpad-applications`, `launchpad-jobs` |
 | Lambdas | `launchpad-tailor-resume`, `launchpad-decode-job`, `launchpad-generate-outreach`, `launchpad-mock-interview`, `launchpad-tracker` |
 
+## Auth
+
+Google sign-in via Firebase Authentication. Users land on a public page, sign in with Google, and are routed to the dashboard. Firebase UID is used as `userId` in all API calls.
+
 ## Frontend
 
-**4 screens** built in React (Vite), served via S3 + CloudFront:
+**5 screens** built in React (Vite), served via S3 + CloudFront:
 
 | Screen | Route | Purpose |
 |---|---|---|
-| Dashboard | `/` | Stats overview, recent applications, quick actions |
+| Landing | `/` | Public page — Google sign-in |
+| Dashboard | `/dashboard` | Stats overview, recent applications, quick actions |
 | Tailor Resume | `/tailor` | Paste JD → Claude tailors your resume |
 | Job Decoder | `/decode` | Paste JD → Claude extracts fit signals + score |
 | Applications | `/applications` | Full CRUD tracker (add / edit / delete) |
 
 - Light earthy theme — cream background, greens and browns, Lora + Inter fonts
 - Mobile responsive with hamburger nav below 600px
-- API wired to live API Gateway URL
+- Protected routes redirect unauthenticated users to landing page
 
 ## CI/CD
 

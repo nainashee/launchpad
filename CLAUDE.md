@@ -81,9 +81,10 @@ Phase 1 checklist:
 - [x] DynamoDB tables
 - [x] Lambda function skeletons + IAM roles
 - [x] API Gateway HTTP API + 9 routes
-- [x] React frontend — 4 screens, earthy light theme, mobile responsive
+- [x] React frontend — 5 screens (landing + 4 app screens), earthy light theme, mobile responsive
 - [x] GitHub Actions CI/CD — build → S3 sync → CloudFront invalidation
-- [ ] Bedrock AI integration in Lambda functions
+- [x] Firebase Google auth — landing page, AuthContext, protected routes
+- [x] Bedrock AI integration — all 5 Lambda functions live and tested
 
 **Phase 2 (Weeks 5–10 — Live Job Search):** EventBridge scraper, Adzuna/Greenhouse/Lever/Indeed integrations, AI ranker with SQS, SES email digest, GitHub API integration, X-Ray tracing.
 
@@ -136,13 +137,16 @@ curl -s -X POST https://zh1gkhvulc.execute-api.us-east-1.amazonaws.com/decode-jo
 ```
 frontend/src/
   api.js                        # axios client — all API Gateway calls live here
+  firebase.js                   # Firebase app init + auth + GoogleAuthProvider
+  context/AuthContext.jsx        # onAuthStateChanged, signInWithGoogle, signOut
   components/Nav.jsx/.css       # sticky nav, hamburger at <600px
   pages/
+    Landing.jsx/.css            # public landing page + Google sign-in button
     Dashboard.jsx/.css          # stats grid + recent applications + quick actions
     TailorResume.jsx            # POST /tailor-resume
     JobDecoder.jsx              # POST /decode-job
     Applications.jsx/.css       # full CRUD — POST/GET/PUT/DELETE /applications
-  App.jsx                       # React Router — 4 routes
+  App.jsx                       # React Router — 5 routes, ProtectedRoute wrapper
   index.css                     # design tokens + global styles (earthy light theme)
 ```
 
