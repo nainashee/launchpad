@@ -74,6 +74,16 @@ resource "aws_iam_role_policy" "tailor_resume_inline" {
         ]
       },
       {
+        Sid    = "MarketplaceSubscribe"
+        Effect = "Allow"
+        Action = [
+          "aws-marketplace:ViewSubscriptions",
+          "aws-marketplace:Subscribe",
+          "aws-marketplace:Unsubscribe",
+        ]
+        Resource = "*"
+      },
+      {
         Sid    = "S3Assets"
         Effect = "Allow"
         Action = ["s3:GetObject", "s3:PutObject"]
@@ -136,6 +146,16 @@ resource "aws_iam_role_policy" "decode_job_inline" {
           "arn:aws:bedrock:*::foundation-model/*",
           "arn:aws:bedrock:*:*:inference-profile/*",
         ]
+      },
+      {
+        Sid    = "MarketplaceSubscribe"
+        Effect = "Allow"
+        Action = [
+          "aws-marketplace:ViewSubscriptions",
+          "aws-marketplace:Subscribe",
+          "aws-marketplace:Unsubscribe",
+        ]
+        Resource = "*"
       }
     ]
   })
@@ -187,6 +207,16 @@ resource "aws_iam_role_policy" "generate_outreach_inline" {
           "arn:aws:bedrock:*::foundation-model/*",
           "arn:aws:bedrock:*:*:inference-profile/*",
         ]
+      },
+      {
+        Sid    = "MarketplaceSubscribe"
+        Effect = "Allow"
+        Action = [
+          "aws-marketplace:ViewSubscriptions",
+          "aws-marketplace:Subscribe",
+          "aws-marketplace:Unsubscribe",
+        ]
+        Resource = "*"
       },
       {
         Sid    = "DynamoDBProfileRead"
@@ -244,6 +274,16 @@ resource "aws_iam_role_policy" "mock_interview_inline" {
           "arn:aws:bedrock:*::foundation-model/*",
           "arn:aws:bedrock:*:*:inference-profile/*",
         ]
+      },
+      {
+        Sid    = "MarketplaceSubscribe"
+        Effect = "Allow"
+        Action = [
+          "aws-marketplace:ViewSubscriptions",
+          "aws-marketplace:Subscribe",
+          "aws-marketplace:Unsubscribe",
+        ]
+        Resource = "*"
       }
     ]
   })
