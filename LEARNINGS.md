@@ -132,3 +132,53 @@ CORS (Cross-Origin Resource Sharing) is enforced by the browser. When the React 
 
 **What `source_arn = "${execution_arn}/*/*"` means:**
 The `/*/*/*` pattern is `{api}/{stage}/{route}`. Using `/*/*` (any stage, any route) means the same permission covers all routes pointing to that Lambda, so you don't need one permission per route.
+
+---
+
+## Session 3 — April 27, 2026
+
+### What I built
+
+Today I completed the Phase 1 frontend and CI/CD pipeline:
+
+1. **React frontend** — scaffolded with Vite, 4 screens wired to the live API Gateway:
+   - Dashboard — stats grid, recent applications table, quick action cards
+   - Tailor Resume — textarea → POST `/tailor-resume` → display result
+   - Job Decoder — textarea → POST `/decode-job` → display analysis + fit score
+   - Applications — full CRUD table with modal form (add / edit / delete)
+
+2. **Earthy light UI theme** — cream background (`#faf7f2`), forest greens, warm browns, Lora serif headings, Inter body. Design tokens in CSS custom properties so the whole palette is controlled from one place.
+
+3. **Mobile responsive nav** — horizontal links on desktop, hamburger menu below 600px that animates to an X and reveals a full-width drawer.
+
+4. **GitHub Actions CI/CD** — `.github/workflows/deploy.yml` triggers on push to `main` when `frontend/` changes. Builds the app, syncs to S3 with `--delete`, then invalidates CloudFront. `index.html` gets `no-cache` headers; all other assets get 1-year immutable cache.
+
+5. **CORS fix** — API Gateway `cors_configuration` only allowed the production domain. Added `http://localhost:5173` so the dev server can call the live API without CORS errors.
+
+### What tripped me up
+
+**CORS works in curl but not in the browser.**
+`curl` doesn't enforce CORS — it just sends the request and gets the response. The browser sends a preflight `OPTIONS` request first and checks for `Access-Control-Allow-Origin` in the response. Our API Gateway had CORS configured, but only for `https://jobs.naindigital.com`. Adding `http://localhost:5173` to `allow_origins` and running `terraform apply` fixed it immediately.
+
+**Vite can't scaffold into a non-empty directory.**
+Running `npm create vite@latest .` in an existing folder (even with just a `.gitkeep`) fails with "Operation cancelled." The workaround is to scaffold into a temp folder (`frontend-tmp`) and then copy everything over.
+
+**`index.html` must never be cached at the CDN.**
+Static assets (JS, CSS) get content-hash filenames from Vite (e.g. `index-DpbLTSKt.js`), so they're safe to cache forever. But `index.html` always has the same filename — if CloudFront caches it, users get the old version of the app even after a new deploy. Solved by uploading `index.html` separately with `Cache-Control: no-cache, no-store, must-revalidate`.
+
+### What I understand now
+
+**How Vite handles cache-busting:**
+Vite fingerprints every JS and CSS file in `dist/assets/` with a content hash (e.g. `index-DpbLTSKt.js`). If you change a single line of code, the hash changes and the browser treats it as a brand-new file. This is why you can safely set a 1-year cache on those files — the URL itself changes when the content changes.
+
+**Why `npm ci` instead of `npm install` in CI:**
+`npm install` can update `package-lock.json` if there are floating version ranges. `npm ci` always installs the exact versions pinned in `package-lock.json` and fails if there's a mismatch. This makes CI builds reproducible — you get the exact same dependency tree every time.
+
+**How the S3 + CloudFront deploy pipeline works:**
+`aws s3 sync dist/ s3://bucket --delete` uploads new/changed files and removes files that no longer exist. CloudFront then needs to be told to stop serving its cached copies — that's the invalidation step (`/*` clears everything). Without it, users could get a mix of old and new files until CloudFront's TTL expires naturally.
+
+**Why React Router needs a CloudFront fallback.**
+React Router handles routing in the browser — `/tailor`, `/decode` etc. are not real files in S3. If a user bookmarks `jobs.naindigital.com/tailor` and loads it directly, CloudFront asks S3 for a file at `/tailor`, gets a 404, and returns that to the user. The fix (Phase next) is to configure a CloudFront custom error response that returns `index.html` with a 200 for all 404s, letting React Router take over.
+
+**CSS custom properties for design tokens:**
+Instead of hardcoding colours throughout the CSS, all design values live in `:root { --green-700: #3d6b4a; ... }`. Every component references `var(--green-700)`. To retheme the whole app you change one block. It also makes dark mode trivial to add later — just redefine the variables inside a `@media (prefers-color-scheme: dark)` block.

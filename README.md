@@ -23,8 +23,8 @@ AI-powered job search automation built on AWS serverless.
 - [x] DynamoDB tables (Profile, Applications, Jobs)
 - [x] 5 core Lambda functions (skeletons + IAM roles)
 - [x] API Gateway HTTP API (9 routes, fully wired)
-- [ ] React frontend
-- [ ] GitHub Actions CI/CD pipeline
+- [x] React frontend (4 screens, earthy light theme, mobile responsive)
+- [x] GitHub Actions CI/CD — auto-deploy on push to main
 - [ ] Bedrock AI integration
 
 ## API
@@ -53,6 +53,26 @@ AI-powered job search automation built on AWS serverless.
 | DynamoDB | `launchpad-profile`, `launchpad-applications`, `launchpad-jobs` |
 | Lambdas | `launchpad-tailor-resume`, `launchpad-decode-job`, `launchpad-generate-outreach`, `launchpad-mock-interview`, `launchpad-tracker` |
 
+## Frontend
+
+**4 screens** built in React (Vite), served via S3 + CloudFront:
+
+| Screen | Route | Purpose |
+|---|---|---|
+| Dashboard | `/` | Stats overview, recent applications, quick actions |
+| Tailor Resume | `/tailor` | Paste JD → Claude tailors your resume |
+| Job Decoder | `/decode` | Paste JD → Claude extracts fit signals + score |
+| Applications | `/applications` | Full CRUD tracker (add / edit / delete) |
+
+- Light earthy theme — cream background, greens and browns, Lora + Inter fonts
+- Mobile responsive with hamburger nav below 600px
+- API wired to live API Gateway URL
+
+## CI/CD
+
+Push to `main` → GitHub Actions builds `frontend/` → syncs to S3 → invalidates CloudFront.
+Assets are cached for 1 year; `index.html` is never cached so deploys are instant.
+
 ## Live App
 
-[jobs.naindigital.com](https://jobs.naindigital.com) *(frontend coming soon)*
+[jobs.naindigital.com](https://jobs.naindigital.com)

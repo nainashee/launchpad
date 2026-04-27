@@ -74,7 +74,16 @@ launchpad-assets-<account-id>/
 
 ## Development Phases
 
-**Phase 1 (Weeks 1–4 — MVP):** Static frontend, 5 core Lambdas, 3 DynamoDB tables, API Gateway, GitHub Actions CI/CD, CloudWatch.
+**Phase 1 (Weeks 1–4 — MVP):** React frontend, 5 core Lambdas, 3 DynamoDB tables, API Gateway, GitHub Actions CI/CD, Bedrock AI integration.
+
+Phase 1 checklist:
+- [x] Terraform base infrastructure (S3, CloudFront, ACM, DNS)
+- [x] DynamoDB tables
+- [x] Lambda function skeletons + IAM roles
+- [x] API Gateway HTTP API + 9 routes
+- [x] React frontend — 4 screens, earthy light theme, mobile responsive
+- [x] GitHub Actions CI/CD — build → S3 sync → CloudFront invalidation
+- [ ] Bedrock AI integration in Lambda functions
 
 **Phase 2 (Weeks 5–10 — Live Job Search):** EventBridge scraper, Adzuna/Greenhouse/Lever/Indeed integrations, AI ranker with SQS, SES email digest, GitHub API integration, X-Ray tracing.
 
@@ -100,12 +109,11 @@ AWS_PROFILE=launchpad terraform apply
 cd functions/<function-name>/
 python -m pytest tests/
 
-# Frontend (React) — not scaffolded yet
+# Frontend (React + Vite)
 cd frontend/
 npm install
-npm run dev        # local dev server
-npm run build      # production build
-npm run test       # unit tests
+npm run dev        # local dev server at localhost:5173
+npm run build      # production build → dist/
 npm run lint       # ESLint
 
 # CI/CD
@@ -123,6 +131,27 @@ curl -s -X POST https://zh1gkhvulc.execute-api.us-east-1.amazonaws.com/decode-jo
   -d '{"jobDescription": "..."}'
 ```
 
+## Frontend Architecture
+
+```
+frontend/src/
+  api.js                        # axios client — all API Gateway calls live here
+  components/Nav.jsx/.css       # sticky nav, hamburger at <600px
+  pages/
+    Dashboard.jsx/.css          # stats grid + recent applications + quick actions
+    TailorResume.jsx            # POST /tailor-resume
+    JobDecoder.jsx              # POST /decode-job
+    Applications.jsx/.css       # full CRUD — POST/GET/PUT/DELETE /applications
+  App.jsx                       # React Router — 4 routes
+  index.css                     # design tokens + global styles (earthy light theme)
+```
+
+**Theme:** Lora (serif headings) + Inter (body), warm cream background, forest green CTAs, brown text hierarchy.
+
+**CI/CD flow:** push to `main` → `.github/workflows/deploy.yml` → `npm ci` + `npm run build` → `aws s3 sync dist/ s3://launchpad-frontend-jobs --delete` → CloudFront invalidation on `E325QX646NP0EU`. Assets cached 1 year; `index.html` never cached.
+
+**CORS:** `localhost:5173` and `https://jobs.naindigital.com` both allowed in API Gateway `cors_configuration`.
+
 ## Key Design Decisions
 
 - **Lambda over EC2** — no idle cost, auto-scales, pay-per-invocation
@@ -130,3 +159,4 @@ curl -s -X POST https://zh1gkhvulc.execute-api.us-east-1.amazonaws.com/decode-jo
 - **HTTP API over REST API** — ~70% cheaper, sufficient for this use case
 - **Bedrock over direct Anthropic API** — native IAM auth (no API key rotation), stays within AWS billing
 - **Terraform over CDK/SAM** — explicit, portable, teaches cloud fundamentals
+- **Vite over CRA** — faster dev server, smaller bundles, modern default
