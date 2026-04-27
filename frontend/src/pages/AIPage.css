@@ -1,0 +1,122 @@
+.page-desc {
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+  font-size: 0.95rem;
+  max-width: 600px;
+  line-height: 1.7;
+}
+
+/* ─── Form ─── */
+.ai-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 760px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.ai-form label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.ai-form textarea {
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-body);
+  font-size: 0.9rem;
+  padding: 0.85rem 1rem;
+  resize: vertical;
+  font-family: 'Inter', sans-serif;
+  line-height: 1.65;
+  transition: border-color var(--ease), box-shadow var(--ease);
+}
+
+.ai-form textarea:focus {
+  outline: none;
+  border-color: var(--green-500);
+  box-shadow: 0 0 0 3px rgba(90, 143, 106, 0.15);
+}
+
+.ai-form textarea::placeholder {
+  color: var(--text-muted);
+}
+
+/* ─── Result ─── */
+.result-box {
+  margin-top: 1.75rem;
+  max-width: 760px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.result-header {
+  background: var(--bg-muted);
+  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.result-header h2 {
+  margin: 0;
+  font-size: 0.8rem;
+  font-family: 'Inter', sans-serif;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.result-body { padding: 1.5rem; }
+
+.result-pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: 'Menlo', 'Consolas', monospace;
+  font-size: 0.85rem;
+  color: var(--text-body);
+  margin: 0;
+  line-height: 1.75;
+}
+
+.fit-score {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.fit-score-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.fit-score-value {
+  font-family: 'Lora', Georgia, serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--green-700);
+}
+
+.s3-key {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
